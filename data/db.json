@@ -1,0 +1,133 @@
+{
+  "users": [
+    {
+      "id": "admin_sayfulloh",
+      "email": "sayfulloh822siftdagmail.com",
+      "username": "sayfulloh",
+      "firstName": "Sayfulloh",
+      "lastName": "Admin",
+      "bio": "Maktab ijtimoiy platformasi Bosh Administratori",
+      "avatarUrl": "/uploads/avatars/default.png",
+      "isAdmin": true,
+      "createdAt": "2026-09-20T10:00:00.000Z",
+      "updatedAt": "2026-09-20T10:12:57.051Z"
+    },
+    {
+      "id": "user_1789898285207_ylpq",
+      "email": "none.gmail.com",
+      "username": "nonegmailcom",
+      "firstName": "",
+      "lastName": "",
+      "bio": "",
+      "avatarUrl": "",
+      "isAdmin": false,
+      "createdAt": "2026-09-20T09:58:05.207Z"
+    },
+    {
+      "id": "user_1789898455847_dm74",
+      "email": "nome@gmail.com",
+      "username": "nome",
+      "firstName": "",
+      "lastName": "",
+      "bio": "",
+      "avatarUrl": "",
+      "isAdmin": false,
+      "createdAt": "2026-09-20T10:00:55.847Z"
+    },
+    {
+      "id": "user_1789898894215_urs1",
+      "email": "nome.gmail.com",
+      "username": "nomegmailcom",
+      "firstName": "",
+      "lastName": "",
+      "bio": "",
+      "avatarUrl": "",
+      "isAdmin": false,
+      "createdAt": "2026-09-20T10:08:14.215Z"
+    }
+  ],
+  "posts": [
+    {
+      "id": "post_1789898474648_m8bib",
+      "userId": "user_1789898455847_dm74",
+      "videoUrl": "/uploads/videos/1789898474546_ojqr3r.mp4",
+      "caption": "hello",
+      "likes": [],
+      "createdAt": "2026-09-20T10:01:14.648Z"
+    }
+  ],
+  "invitations": [
+    {
+      "id": "inv_1789898645604_wk6kz",
+      "fromUserId": "admin_sayfulloh",
+      "toUserId": "user_1789898455847_dm74",
+      "status": "accepted",
+      "createdAt": "2026-09-20T10:04:05.604Z",
+      "updatedAt": "2026-09-20T10:04:13.954Z"
+    },
+    {
+      "id": "inv_1789899039940_jl2i9",
+      "fromUserId": "user_1789898894215_urs1",
+      "toUserId": "user_1789898455847_dm74",
+      "status": "pending",
+      "createdAt": "2026-09-20T10:10:39.940Z"
+    },
+    {
+      "id": "inv_1789899190024_igtnu",
+      "fromUserId": "admin_sayfulloh",
+      "toUserId": "user_1789898894215_urs1",
+      "status": "pending",
+      "createdAt": "2026-09-20T10:13:10.024Z"
+    },
+    {
+      "id": "inv_1789899313298_gmikr",
+      "fromUserId": "admin_sayfulloh",
+      "toUserId": "user_1789898285207_ylpq",
+      "status": "pending",
+      "createdAt": "2026-09-20T10:15:13.298Z"
+    }
+  ],
+  "messages": [],
+  "activeOtps": {
+    "sayfulloh822@gmail.com": {
+      "code": "473896",
+      "createdAt": "2026-09-20T09:53:41.207Z"
+    },
+    "sayfulloh822siftda@gmail.com": {
+      "code": "235418",
+      "createdAt": "2026-09-20T09:54:12.947Z"
+    },
+    "sayfulloh822siftd@gmail.com": {
+      "code": "246935",
+      "createdAt": "2026-09-20T10:12:27.455Z"
+    },
+    "https://sayfulloh822siftdagmail.com": {
+      "code": "207634",
+      "createdAt": "2026-09-20T10:05:54.158Z"
+    },
+    "hello@gmail.com": {
+      "code": "612708",
+      "createdAt": "2026-09-20T10:11:49.033Z"
+    }
+  },
+  "schoolAnnouncements": [
+    {
+      "id": "ann_1",
+      "title": "Platformamizga xush kelibsiz!",
+      "content": "Maktabimizning xavfsiz va yopiq ijtimoiy tarmog'i rasman ishga tushdi. Videolaringizni 'Chiqarish' tugmasi orqali ulashing!",
+      "createdAt": "2026-09-20T10:00:00.000Z"
+    }
+  ],
+  "sessions": {
+    "tok_admin_0cde970d-650f-4d50-9d86-c73fafad2979": {
+      "userId": "admin_sayfulloh",
+      "email": "sayfulloh822siftdagmail.com",
+      "isAdmin": true
+    },
+    "tok_admin_3c156772-b58b-44e7-916f-a1d02edb7b09": {
+      "userId": "admin_sayfulloh",
+      "email": "sayfulloh822siftdagmail.com",
+      "isAdmin": true
+    }
+  }
+}

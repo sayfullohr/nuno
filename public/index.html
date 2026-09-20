@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Maktab Ijtimoiy Platformasi</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+  <!-- 1. KIRISH VA AUTENTIFIKATSIYA QISMI -->
+  <div id="auth-screen" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="brand-logo" style="justify-content: center; margin-bottom: 12px; font-size: 1.6rem;">
+        🏫 MaktabNet
+      </div>
+      <h2 class="auth-title">Xush kelibsiz</h2>
+      <p class="auth-subtitle">Maktabimizning yopiq, xavfsiz va zamonaviy ijtimoiy tarmog'i</p>
+
+      <!-- 1-qadam: Faqat Email kiritish -->
+      <form id="email-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="auth-email">Email manzilingiz</label>
+          <input type="text" id="auth-email" class="form-input" placeholder="sayfulloh822siftdagmail.com" required autocomplete="off">
+        </div>
+        <button type="submit" class="btn-primary" id="btn-check-email">Davom etish</button>
+      </form>
+
+      <!-- 2-qadam A: Admin Parol (Sayfulloh uchun) -->
+      <form id="admin-pass-form" class="hidden">
+        <div class="form-group">
+          <label class="form-label">Administrator Paroli</label>
+          <input type="password" id="admin-password" class="form-input" placeholder="Parolni kiriting..." required>
+        </div>
+        <button type="submit" class="btn-primary">Admin Panelga kirish</button>
+        <button type="button" class="btn-secondary mt-2 w-100" onclick="authModule.resetAuthForm()">Bekor qilish</button>
+      </form>
+
+      <!-- 2-qadam B: Oddiy Foydalanuvchi OTP Kodi -->
+      <form id="otp-form" class="hidden">
+        <div class="form-group">
+          <label class="form-label">Tasdiqlash kodi (Admin orqali)</label>
+          <input type="text" id="otp-code" class="form-input" placeholder="6 xonali kod" maxlength="6" required style="font-size: 1.3rem; letter-spacing: 4px; text-align: center;">
+          <p class="text-muted mt-2" style="font-size: 0.8rem;">
+            * Kod admin paneli orqali taqdim etiladi. Agar qaytadan kirsangiz, yangi kod hosil bo'ladi.
+          </p>
+        </div>
+        <button type="submit" class="btn-primary">Tizimga kirish</button>
+        <button type="button" class="btn-secondary mt-2 w-100" onclick="authModule.resetAuthForm()">Boshqatdan kirish</button>
+      </form>
+
+      <div id="auth-error" class="hidden mt-2" style="color: var(--danger); font-size: 0.85rem; font-weight: 600;"></div>
+    </div>
+  </div>
+
+  <!-- 2. ASOSIY DASTUR QISMI (Kirgandan so'ng) -->
+  <div id="main-app" class="app-container hidden">
+
+    <!-- TEPADAGI HEADER -->
+    <header class="top-header">
+      <div class="brand-logo">
+        🏫 MaktabNet
+        <span class="brand-badge" id="header-user-badge">O'quvchi / Ustoz</span>
+      </div>
+      <!-- TEPADA POST QO'YISH TUGMASI: FAQAT "+" -->
+      <button class="btn-plus" id="btn-open-create-post" title="Yangi post chiqarish">+</button>
+    </header>
+
+    <!-- VIEWS: 1. ASOSIY MENYU (LINKEDIN USLUBIDAGI LENTA) -->
+    <main id="feed-view" class="view-section">
+      <!-- Maktab e'lonlari paneli (agar bo'lsa) -->
+      <div id="announcements-container"></div>
+
+      <!-- Postlar lentasi -->
+      <div id="posts-container" class="feed-container">
+        <!-- Post kartalari bu yerga dinamik yuklanadi -->
+      </div>
+    </main>
+
+    <!-- VIEWS: 2. CHAT MENYUSI -->
+    <main id="chat-view" class="view-section hidden">
+      <!-- Chat ro'yxati va qidiruv ko'rinishi -->
+      <div id="chat-main-panel">
+        <!-- Takliflar bildirishnomasi ("Sizga taklif yuborildi, qabul qilasizmi?") -->
+        <div id="invitations-banner" class="hidden" style="margin-bottom: 16px;"></div>
+
+        <!-- Username bo'yicha qidiruv -->
+        <div class="chat-search-box">
+          <input type="text" id="chat-search-input" class="form-input" placeholder="Foydalanuvchi nomini (usernameni) qidirish...">
+        </div>
+
+        <!-- Qidiruv natijalari -->
+        <div id="chat-search-results" class="hidden" style="margin-bottom: 16px;"></div>
+
+        <!-- Suhbatlar ro'yxati (doira rasmlar bilan) -->
+        <h4 style="margin-bottom: 10px; font-weight: 700;">Suhbatlar</h4>
+        <div id="chat-contacts" class="chat-contacts-list">
+          <p class="text-muted" style="font-size: 0.9rem;">Hozircha faol suhbatlar yo'q. Yuqoridan usernameni qidirib suhbat taklifini yuboring.</p>
+        </div>
+      </div>
+
+      <!-- Xabarlashish oynasi (Suhbat ochilganda) -->
+      <div id="chat-conversation-panel" class="chat-window hidden">
+        <div class="chat-window-header">
+          <button class="btn-secondary" id="btn-back-to-contacts" style="padding: 4px 10px;">← Orqaga</button>
+          <img id="active-chat-avatar" class="avatar" src="/uploads/avatars/default.png" alt="Avatar">
+          <div>
+            <div id="active-chat-name" style="font-weight: 700; font-size: 0.95rem;">Foydalanuvchi</div>
+            <div id="active-chat-sub" style="font-size: 0.75rem; color: var(--text-muted);">@username</div>
+          </div>
+        </div>
+
+        <div id="chat-messages-box" class="chat-messages">
+          <!-- Xabarlar -->
+        </div>
+
+        <form id="chat-send-form" class="chat-input-bar">
+          <input type="text" id="chat-msg-input" class="form-input" placeholder="Xabar yozing..." autocomplete="off">
+          <button type="submit" class="btn-primary" style="width: auto; padding: 0 18px;">Yuborish</button>
+        </form>
+      </div>
+    </main>
+
+    <!-- VIEWS: 3. PROFIL MENYUSI (FACEBOOK USLUBIDA) -->
+    <main id="profile-view" class="view-section hidden">
+      <div class="fb-profile-container">
+        <!-- Facebook Cover Photo (Muqova) -->
+        <div class="fb-cover-photo">
+          <div class="fb-cover-topbar">
+            <!-- Eng tepada Username -->
+            <div class="fb-username-badge" id="profile-display-username">@username</div>
+            <!-- O'ng tomonda ☰ uchta chiziqcha -->
+            <button class="fb-burger-btn" id="btn-profile-burger" title="Sozlamalar">☰</button>
+          </div>
+
+          <!-- Ochiladigan burger menyu (Dropdown) -->
+          <div id="profile-dropdown" class="dropdown-menu hidden" style="top: 48px; right: 16px;">
+            <button class="dropdown-item" id="menu-edit-profile">
+              ✏️ Edit profil
+            </button>
+            <button class="dropdown-item danger" id="menu-logout">
+              🚪 Chiqib ketish
+            </button>
+          </div>
+        </div>
+
+        <!-- Facebook Profil Asosiy Qismi -->
+        <div class="fb-profile-body">
+          <!-- Katta Dumaloq Avatar (Muqova ustiga chiqqan oq hoshiyali) -->
+          <div class="fb-avatar-wrapper">
+            <img id="profile-display-avatar" class="fb-avatar" src="/images/default-avatar.svg" alt="Profil rasmi" onerror="this.src='/images/default-avatar.svg'">
+          </div>
+
+          <!-- Ism, Bio va Tugmalar -->
+          <div class="fb-profile-details">
+            <h2 class="fb-profile-name" id="profile-display-fullname">Ism Familiya</h2>
+            <p class="fb-profile-bio" id="profile-display-bio">Hali ma'lumot kiritilmagan...</p>
+            
+            <div class="fb-action-bar">
+              <button class="btn-fb-edit" onclick="profileModule.openEditModal()">
+                ✏️ Edit profil
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Foydalanuvchining o'z postlari (Telefonda 3 ta, kompyuterda 6 ta) -->
+      <div>
+        <div class="profile-grid-title">
+          🎬 Mening videolarim
+        </div>
+        <div id="profile-posts-grid" class="profile-posts-grid">
+          <!-- To'rtburchak video postlar -->
+        </div>
+      </div>
+    </main>
+
+    <!-- VIEWS: 4. ADMIN PANEL (Sayfulloh uchun) -->
+    <main id="admin-view" class="view-section hidden">
+      <div class="profile-header-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="font-weight: 800;">⚡ Maktab Bosh Administrator Paneli</h3>
+          <span class="admin-badge">Sayfulloh</span>
+        </div>
+        <p class="text-muted" style="font-size: 0.85rem;">
+          Bu yerda foydalanuvchilarning kirish kodlari jonli keladi, a'zolar ma'lumotlarini boshqarishingiz va yangiliklar kiritishingiz mumkin.
+        </p>
+      </div>
+
+      <!-- Jonli OTP kodlari (Live OTP Monitor) -->
+      <div class="profile-header-card">
+        <h4 style="margin-bottom: 10px; font-weight: 700; color: #15803d;">
+          🔔 Jonli Kirish So'rovlari (OTP Kodlar)
+        </h4>
+        <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 10px;">
+          Ushbu kodni kirmoqchi bo'lgan shaxsga taqdim eting:
+        </p>
+        <div id="admin-otp-list">
+          <p class="text-muted" style="font-size: 0.85rem;">Hozircha yangi kirish so'rovlari yo'q.</p>
+        </div>
+      </div>
+
+      <!-- Yangi e'lon qo'shish -->
+      <div class="profile-header-card">
+        <h4 style="margin-bottom: 10px; font-weight: 700;">📢 Maktab uchun yangilik / e'lon qo'shish</h4>
+        <form id="admin-announcement-form">
+          <div class="form-group">
+            <input type="text" id="ann-title" class="form-input" placeholder="E'lon sarlavhasi..." required>
+          </div>
+          <div class="form-group">
+            <textarea id="ann-content" class="form-input" rows="2" placeholder="E'lon matni..." required></textarea>
+          </div>
+          <button type="submit" class="btn-primary" style="width: auto;">E'lonni chiqarish</button>
+        </form>
+      </div>
+
+      <!-- Foydalanuvchilar ro'yxati va chiqarib yuborish (Kick) -->
+      <div class="profile-header-card">
+        <h4 style="margin-bottom: 10px; font-weight: 700;">👥 Ro'yxatdan o'tgan foydalanuvchilar</h4>
+        <div id="admin-users-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Foydalanuvchilar -->
+        </div>
+      </div>
+    </main>
+
+    <!-- PASTKI MENYULAR (TELEFONNING PASTROG'IDA) -->
+    <nav class="bottom-nav">
+      <!-- 1. Asosiy menyu -->
+      <button class="nav-item active" data-view="feed-view">
+        <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>Asosiy</span>
+      </button>
+
+      <!-- 2. Chat menyu -->
+      <button class="nav-item" data-view="chat-view">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <span>Chat</span>
+      </button>
+
+      <!-- 3. Profil menyusi -->
+      <button class="nav-item" data-view="profile-view">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>Profil</span>
+      </button>
+
+      <!-- 4. Admin menyusi (Faqat Sayfulloh uchun ko'rinadi) -->
+      <button class="nav-item hidden" id="nav-item-admin" data-view="admin-view">
+        <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <span>Admin</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- MODAL 1: POST QO'YISH ("+" BOSILGANDA) -->
+  <div id="modal-create-post" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Yangi video chiqarish</h3>
+        <button class="modal-close" id="btn-close-post-modal">&times;</button>
+      </div>
+      <form id="form-create-post">
+        <div class="form-group">
+          <label class="form-label">Video tanlang (.mp4, .webm, .mov)</label>
+          <input type="file" id="post-video-file" class="form-input" accept="video/*" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Matn (Tavsif)</label>
+          <textarea id="post-caption-input" class="form-input" rows="3" placeholder="Video haqida yozing..."></textarea>
+        </div>
+        <div id="post-upload-status" class="text-muted mt-2 hidden" style="font-size: 0.85rem;">Yuklanmoqda, iltimos kuting...</div>
+        <!-- Tugma nomi: aynan "Chiqarish" -->
+        <button type="submit" class="btn-primary mt-2" id="btn-submit-post">Chiqarish</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: EDIT PROFIL -->
+  <div id="modal-edit-profile" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Profilni tahrirlash</h3>
+        <button class="modal-close" id="btn-close-edit-modal">&times;</button>
+      </div>
+      <form id="form-edit-profile">
+        <div class="form-group">
+          <label class="form-label">Profil rasmi</label>
+          <input type="file" id="edit-avatar-file" class="form-input" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username (Boshqalar ololmaydigan unikal nom)</label>
+          <input type="text" id="edit-username" class="form-input" required placeholder="Masalan: Sayfulloh">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ism</label>
+          <input type="text" id="edit-firstname" class="form-input" placeholder="Ismingiz">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Familiya</label>
+          <input type="text" id="edit-lastname" class="form-input" placeholder="Familiyangiz">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bio (O'zingiz haqida qisqacha ma'lumot)</label>
+          <textarea id="edit-bio" class="form-input" rows="2" placeholder="Sinfingiz, qiziqishlaringiz..."></textarea>
+        </div>
+        <div id="edit-profile-error" class="hidden mt-2" style="color: var(--danger); font-size: 0.85rem; font-weight: 600;"></div>
+        <button type="submit" class="btn-primary mt-2">Saqlash</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JS MODULLAR -->
+  <script src="/js/auth.js"></script>
+  <script src="/js/feed.js"></script>
+  <script src="/js/chat.js"></script>
+  <script src="/js/profile.js"></script>
+  <script src="/js/admin.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
