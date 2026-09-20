@@ -270,7 +270,19 @@
           <label class="form-label">Matn (Tavsif)</label>
           <textarea id="post-caption-input" class="form-input" rows="3" placeholder="Video haqida yozing..."></textarea>
         </div>
-        <div id="post-upload-status" class="text-muted mt-2 hidden" style="font-size: 0.85rem;">Yuklanmoqda, iltimos kuting...</div>
+
+        <!-- Jonli Yuklanish Ko'rsatkichi (Progress Bar) -->
+        <div id="post-upload-container" class="hidden mt-2">
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; color: var(--primary);">
+            <span id="post-upload-text">Serverga yuklanmoqda...</span>
+            <span id="post-upload-percent">0%</span>
+          </div>
+          <div style="background: #e2e8f0; border-radius: 999px; height: 10px; overflow: hidden; width: 100%;">
+            <div id="post-upload-bar" style="background: linear-gradient(90deg, #2563eb, #3b82f6); height: 100%; width: 0%; border-radius: 999px; transition: width 0.15s ease;"></div>
+          </div>
+          <p class="text-muted mt-2" style="font-size: 0.78rem;">Iltimos, video to'liq yuklanguncha kutib turing.</p>
+        </div>
+
         <!-- Tugma nomi: aynan "Chiqarish" -->
         <button type="submit" class="btn-primary mt-2" id="btn-submit-post">Chiqarish</button>
       </form>

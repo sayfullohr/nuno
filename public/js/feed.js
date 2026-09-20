@@ -154,11 +154,14 @@ const feedModule = {
     }
   },
 
-  async handleCreatePost(e) {
+  handleCreatePost(e) {
     e.preventDefault();
     const fileInput = document.getElementById('post-video-file');
     const captionInput = document.getElementById('post-caption-input');
-    const statusEl = document.getElementById('post-upload-status');
+    const container = document.getElementById('post-upload-container');
+    const barEl = document.getElementById('post-upload-bar');
+    const percentEl = document.getElementById('post-upload-percent');
+    const textEl = document.getElementById('post-upload-text');
     const submitBtn = document.getElementById('btn-submit-post');
 
     if (!fileInput.files || fileInput.files.length === 0) {
@@ -166,43 +169,66 @@ const feedModule = {
       return;
     }
 
+    const file = fileInput.files[0];
+
     const formData = new FormData();
-    formData.append('video', fileInput.files[0]);
+    formData.append('video', file);
     formData.append('caption', captionInput.value);
 
-    statusEl.classList.remove('hidden');
-    statusEl.innerText = 'Video yuklanmoqda, iltimos kuting...';
+    // Progress barni yoqish
+    container.classList.remove('hidden');
+    barEl.style.width = '0%';
+    percentEl.innerText = '0%';
+    textEl.innerText = 'Serverga yuklanmoqda...';
     submitBtn.disabled = true;
 
-    try {
-      const res = await fetch('/api/posts/create', {
-        method: 'POST',
-        headers: { 'x-auth-token': authModule.token },
-        body: formData
-      });
-      const data = await res.json();
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/posts/create', true);
+    xhr.setRequestHeader('x-auth-token', authModule.token);
 
-      if (!res.ok) {
-        alert(data.error || 'Video yuklashda xatolik yuz berdi');
-        statusEl.classList.add('hidden');
-        submitBtn.disabled = false;
-        return;
+    // Yuklanish jarayoni (jonli foiz)
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        percentEl.innerText = `${percent}%`;
+        barEl.style.width = `${percent}%`;
+        if (percent >= 100) {
+          textEl.innerText = 'Video saqlanmoqda, ozgina kuting...';
+        }
       }
+    };
 
-      // Tozalash va modalni yopish
-      fileInput.value = '';
-      captionInput.value = '';
-      statusEl.classList.add('hidden');
+    xhr.onload = () => {
       submitBtn.disabled = false;
-      document.getElementById('modal-create-post').classList.add('hidden');
+      container.classList.add('hidden');
 
-      // Yangi postni lentaning boshiga qo'shish
-      this.addNewPostToTop(data.post);
-    } catch (err) {
-      alert('Serverga ulanib bo\'lmadi');
-      statusEl.classList.add('hidden');
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          fileInput.value = '';
+          captionInput.value = '';
+          document.getElementById('modal-create-post').classList.add('hidden');
+          this.addNewPostToTop(data.post);
+        } catch (err) {
+          alert('Xatolik yuz berdi');
+        }
+      } else {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          alert(data.error || 'Video yuklashda xatolik yuz berdi');
+        } catch (e) {
+          alert('Serverdan noto\'g\'ri javob keldi');
+        }
+      }
+    };
+
+    xhr.onerror = () => {
       submitBtn.disabled = false;
-    }
+      container.classList.add('hidden');
+      alert('Tarmoq xatosi: video yuklab bo\'lmadi');
+    };
+
+    xhr.send(formData);
   },
 
   addNewPostToTop(post) {
